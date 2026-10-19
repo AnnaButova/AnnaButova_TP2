@@ -72,15 +72,11 @@ class MainWindow(QMainWindow):
 
         for i in cmds.ls():
             if self.apply_colors.isChecked():
-                if i.startswith(json_data[0]):
-                    cmds.setAttr(f"{i}.overrideEnabled", 1)
-                    cmds.setAttr(f"{i}.overrideColor", json_data[1])
-                elif i.startswith(json_data[1]):
-                    cmds.setAttr(f"{i}.overrideEnabled", 1)
-                    cmds.setAttr(f"{i}.overrideColor", json_data[2])
-                elif i.startswith(json_data[2]):
-                    cmds.setAttr(f"{i}.overrideEnabled", 1)
-                    cmds.setAttr(f"{i}.overrideColor", json_data[3])
+                for key, value in json_data.items():
+                    if i.startswith(key):
+                        cmds.setAttr(f"{i}.useOutlinerColor", 1)
+                        cmds.setAttr(f"{i}.outlinerColor", value[0], value[1], value[2], type = "float3")
+            
 
 window = MainWindow()
 window.show()
