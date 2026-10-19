@@ -47,11 +47,9 @@ class MainWindow(QMainWindow):
         # Create a button to organise
         self.organise_button = QPushButton("Organise Outliner")
         layout_v.addWidget(self.organise_button)
+        self.organise_button.clicked.connect(self.attribute_color)
+        self.organise_button.clicked.connect(self.sort_outliner)
 
-        # Create test button
-        self.test_button = QPushButton("Test")
-        layout_v.addWidget(self.test_button)
-        self.test_button.clicked.connect(self.attribute_color)
 
     # READ JSON FILE ----------------------------------------------------------
     def read_json_file(self): # reads JSON file
@@ -67,6 +65,7 @@ class MainWindow(QMainWindow):
         else:
             print("File does not exist.")
 
+    # ATTRIBUTE COLOR TO OUTLINER OBJECTS ----------------------------------------------------------
     def attribute_color(self):
         json_data = self.read_json_file()
 
@@ -76,7 +75,13 @@ class MainWindow(QMainWindow):
                     if i.startswith(key):
                         cmds.setAttr(f"{i}.useOutlinerColor", 1)
                         cmds.setAttr(f"{i}.outlinerColor", value[0], value[1], value[2], type = "float3")
-            
+
+    def sort_outliner(self):
+        for i in cmds.ls():
+            if self.apply_reorder.isChecked():
+                i.sort()
+                print(i)
+
 
 window = MainWindow()
 window.show()
