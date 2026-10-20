@@ -69,18 +69,29 @@ class MainWindow(QMainWindow):
     def attribute_color(self):
         json_data = self.read_json_file()
 
-        for i in cmds.ls():
-            if self.apply_colors.isChecked():
-                for key, value in json_data.items():
-                    if i.startswith(key):
-                        cmds.setAttr(f"{i}.useOutlinerColor", 1)
-                        cmds.setAttr(f"{i}.outlinerColor", value[0], value[1], value[2], type = "float3")
+        if self.apply_colors.isChecked():
+            for i in cmds.ls():
+                    for key, value in json_data.items():
+                        if i.startswith(key):
+                            cmds.setAttr(f"{i}.useOutlinerColor", 1)
+                            cmds.setAttr(f"{i}.outlinerColor", value[0], value[1], value[2], type = "float3")
 
+    # SORTING OUTLINER ----------------------------------------------------------
     def sort_outliner(self):
-        for i in cmds.ls():
-            if self.apply_reorder.isChecked():
-                i.sort()
-                print(i)
+        json_data = self.read_json_file()
+        sorted_data = dict(sorted(json_data.items()))
+        #print(sorted_data)
+
+        if self.apply_reorder.isChecked():
+            for key in sorted_data.keys():
+                object_list = []
+                for i in cmds.ls(type="transform"):
+                    if i.startswith(key):
+                        object_list.append(i)
+                sorted_outliner = sorted(object_list, key=lambda name: int(name.split("_")[1]))
+                print(sorted_outliner)
+                        
+
 
 
 window = MainWindow()
