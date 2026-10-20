@@ -85,11 +85,14 @@ class MainWindow(QMainWindow):
         if self.apply_reorder.isChecked():
             for key in sorted_data.keys():
                 object_list = []
-                for i in cmds.ls(type="transform"):
+                for i in cmds.ls(selection=True, type="transform"):
                     if i.startswith(key):
                         object_list.append(i)
                 sorted_outliner = sorted(object_list, key=lambda name: int(name.split("_")[1]))
                 print(sorted_outliner)
+                for object in sorted_outliner:
+                    cmds.reorder(object, back=True)
+       
                         
 
 
