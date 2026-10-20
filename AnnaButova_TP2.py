@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from maya import cmds
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QMainWindow,
@@ -10,6 +11,10 @@ from PySide6.QtWidgets import (
     QWidget,
     QLabel
     )
+from PySide6.QtGui import(
+    QShortcut,
+    QKeySequence
+)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -18,6 +23,15 @@ class MainWindow(QMainWindow):
         self.setFixedHeight(170) # define height of the window
         self.setFixedWidth(400)  # define width of the window 
         self.build_ui()
+
+    # UNDO ----------------------------------------------------------
+    def organise(self):
+        cmds.undoInfo(openChunk=True, chunkName="Color Outliner Elements")
+        try:
+            self.attribute_color()
+            self.sort_outliner()
+        finally:
+            cmds.undoInfo(closeChunk=True)
 
     # CREATING UI ----------------------------------------------------------
     def build_ui(self):
@@ -47,8 +61,11 @@ class MainWindow(QMainWindow):
         # Create a button to organise
         self.organise_button = QPushButton("Organise Outliner")
         layout_v.addWidget(self.organise_button)
-        self.organise_button.clicked.connect(self.attribute_color)
-        self.organise_button.clicked.connect(self.sort_outliner)
+        self.organise_button.clicked.connect(self.organise)
+
+        self.undo_shortcut = QShortcut(QKeySequence("Ctrl+Alt+Z"), self)
+        self.undo_shortcut.setContext(Qt.ApplicationShortcut)
+        self.undo_shortcut.activated.connect(cmds.undo)
 
 
     # READ JSON FILE ----------------------------------------------------------
@@ -65,7 +82,8 @@ class MainWindow(QMainWindow):
         else:
             print("File does not exist.")
 
-    # ATTRIBUTE COLOR TO OUTLINER OBJECTS ----------------------------------------------------------
+
+    # APPLY COLOR TO OUTLINER OBJECTS ----------------------------------------------------------
     def attribute_color(self):
         json_data = self.read_json_file()
 
@@ -85,14 +103,16 @@ class MainWindow(QMainWindow):
         if self.apply_reorder.isChecked():
             for key in sorted_data.keys():
                 object_list = []
-                for i in cmds.ls(selection=True, type="transform"):
+                for i in cmds.ls(type="transform"):
                     if i.startswith(key):
                         object_list.append(i)
                 sorted_outliner = sorted(object_list, key=lambda name: int(name.split("_")[1]))
                 print(sorted_outliner)
                 for object in sorted_outliner:
                     cmds.reorder(object, back=True)
+
        
+        
                         
 
 
