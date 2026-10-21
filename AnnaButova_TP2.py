@@ -16,6 +16,10 @@ from PySide6.QtGui import(
     QKeySequence
 )
 
+# ------------------------------------------------------------------------------------------
+# NOTE: Undo action is mapped on Ctrl+Alt+Z due to interference with Maya's basic controls
+# ------------------------------------------------------------------------------------------
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -28,10 +32,13 @@ class MainWindow(QMainWindow):
     def organise(self):
         cmds.undoInfo(openChunk=True, chunkName="Color Outliner Elements")
         try:
-            self.attribute_color()
-            self.sort_outliner()
+            if self.apply_colors.isChecked():
+                self.attribute_color()
+            if self.apply_reorder.isChecked():
+                self.sort_outliner()
         finally:
             cmds.undoInfo(closeChunk=True)
+
 
     # CREATING UI ----------------------------------------------------------
     def build_ui(self):
@@ -63,6 +70,7 @@ class MainWindow(QMainWindow):
         layout_v.addWidget(self.organise_button)
         self.organise_button.clicked.connect(self.organise)
 
+        # Create Shortcut for undo 
         self.undo_shortcut = QShortcut(QKeySequence("Ctrl+Alt+Z"), self)
         self.undo_shortcut.setContext(Qt.ApplicationShortcut)
         self.undo_shortcut.activated.connect(cmds.undo)
@@ -85,37 +93,45 @@ class MainWindow(QMainWindow):
 
     # APPLY COLOR TO OUTLINER OBJECTS ----------------------------------------------------------
     def attribute_color(self):
-        json_data = self.read_json_file()
+        json_data = self.read_json_file() # gets info from json file
 
-        if self.apply_colors.isChecked():
-            for i in cmds.ls():
+        if self.apply_colors.isChecked() and self.apply_selection.isChecked(): # applies colors to selected objects only
+            for i in cmds.ls(selection=True):
                     for key, value in json_data.items():
-                        if i.startswith(key):
-                            cmds.setAttr(f"{i}.useOutlinerColor", 1)
-                            cmds.setAttr(f"{i}.outlinerColor", value[0], value[1], value[2], type = "float3")
+                        if i.startswith(key): # if object name starts with one of json's keys (such as SM_, LGT_ or FX_ in this case)
+                            cmds.setAttr(f"{i}.useOutlinerColor", 1) # tells Maya to show the color in outline
+                            cmds.setAttr(f"{i}.outlinerColor", value[0], value[1], value[2], type = "float3") # applies color to object based on json's values
+        elif self.apply_colors.isChecked(): # applies colors to ALL objects
+                    for i in cmds.ls():
+                            for key, value in json_data.items(): 
+                                if i.startswith(key): # if object name starts with one of json's keys (such as SM_, LGT_ or FX_ in this case)
+                                    cmds.setAttr(f"{i}.useOutlinerColor", 1) # tells Maya to show the color in outline
+                                    cmds.setAttr(f"{i}.outlinerColor", value[0], value[1], value[2], type = "float3") # applies color to object based on json's values
+        
 
     # SORTING OUTLINER ----------------------------------------------------------
     def sort_outliner(self):
-        json_data = self.read_json_file()
-        sorted_data = dict(sorted(json_data.items()))
-        #print(sorted_data)
+        json_data = self.read_json_file() # gets info from json file
+        sorted_data = dict(sorted(json_data.items()))  # sorts info in json (alphabetically)
 
-        if self.apply_reorder.isChecked():
+        if self.apply_reorder.isChecked() and self.apply_selection.isChecked: # sorts selected objects
             for key in sorted_data.keys():
-                object_list = []
-                for i in cmds.ls(type="transform"):
-                    if i.startswith(key):
-                        object_list.append(i)
-                sorted_outliner = sorted(object_list, key=lambda name: int(name.split("_")[1]))
-                print(sorted_outliner)
-                for object in sorted_outliner:
-                    cmds.reorder(object, back=True)
-
-       
-        
-                        
-
-
+                object_list = [] # making a list to store objects in "categories" (according to keys)
+                for i in cmds.ls(selection=True, type="transform"): # all objects in outliner
+                    if i.startswith(key): 
+                        object_list.append(i) # adds object to the list
+                sorted_outliner = sorted(object_list, key=lambda name: int(name.split("_")[1])) # splits object (prefix - number - suffix), then sorts according to number
+                for object in sorted_outliner: 
+                    cmds.reorder(object, back=True) # reorders the objects in MAYA outliner
+        elif self.apply_reorder.isChecked(): # sorts ALL objects
+                    for key in sorted_data.keys():
+                        object_list = [] # making a list to store objects in "categories" (according to keys)
+                        for i in cmds.ls(type="transform"): # all objects in outliner
+                            if i.startswith(key):
+                                object_list.append(i) # adds object to the list
+                        sorted_outliner = sorted(object_list, key=lambda name: int(name.split("_")[1])) # splits object (prefix - number - suffix), then sorts according to number
+                        for object in sorted_outliner: 
+                            cmds.reorder(object, back=True) # reorders the objects in MAYA outliner
 
 window = MainWindow()
 window.show()
