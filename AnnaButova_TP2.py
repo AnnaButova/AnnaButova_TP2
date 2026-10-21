@@ -114,7 +114,7 @@ class MainWindow(QMainWindow):
         json_data = self.read_json_file() # gets info from json file
         sorted_data = dict(sorted(json_data.items()))  # sorts info in json (alphabetically)
 
-        if self.apply_reorder.isChecked() and self.apply_selection.isChecked: # sorts selected objects
+        if self.apply_reorder.isChecked() and self.apply_selection.isChecked(): # sorts selected objects
             for key in sorted_data.keys():
                 object_list = [] # making a list to store objects in "categories" (according to keys)
                 for i in cmds.ls(selection=True, type="transform"): # all objects in outliner
@@ -124,14 +124,14 @@ class MainWindow(QMainWindow):
                 for object in sorted_outliner: 
                     cmds.reorder(object, back=True) # reorders the objects in MAYA outliner
         elif self.apply_reorder.isChecked(): # sorts ALL objects
-                    for key in sorted_data.keys():
-                        object_list = [] # making a list to store objects in "categories" (according to keys)
-                        for i in cmds.ls(type="transform"): # all objects in outliner
-                            if i.startswith(key):
-                                object_list.append(i) # adds object to the list
-                        sorted_outliner = sorted(object_list, key=lambda name: int(name.split("_")[1])) # splits object (prefix - number - suffix), then sorts according to number
-                        for object in sorted_outliner: 
-                            cmds.reorder(object, back=True) # reorders the objects in MAYA outliner
+            for key in sorted_data.keys():
+                object_list = [] # making a list to store objects in "categories" (according to keys)
+                for i in cmds.ls(type="transform"): # all objects in outliner
+                    if i.startswith(key):
+                        object_list.append(i) # adds object to the list
+                sorted_outliner = sorted(object_list, key=lambda name: int(name.split("_")[1])) # splits object (prefix - number - suffix), then sorts according to number
+                for object in sorted_outliner: 
+                    cmds.reorder(object, back=True) # reorders the objects in MAYA outliner
 
 window = MainWindow()
 window.show()
